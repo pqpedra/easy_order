@@ -144,7 +144,7 @@ def clear_one_order(order_id):
     connection.close()
 
 # ----------------------------
-# Restaurant Menu
+# Menu Management
 # ----------------------------
 connection = sqlite3.connect(DB_NAME)
 cursor = connection.cursor()
@@ -197,6 +197,10 @@ def update_menu_item(item_id, new_name, new_category, new_price):
     connection.close()
     print(f"Menu item '{name}' updated in Menu!")
 
+# ----------------------------
+# Reports Management
+# ----------------------------
+
 def get_total_by_table(table_number):
     """Calculate total price of all orders for a table"""
     connection = sqlite3.connect(DB_NAME)
@@ -212,3 +216,31 @@ def get_total_by_table(table_number):
 
     total = sum(quantity * price for quantity, price in rows)
     return total
+
+def get_table_summary():
+    """Return a summary of orders grouped by table"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT table_number, item, SUM(quantity) as total_quantity
+        FROM orders
+        GROUP BY table_number, item
+        ORDER BY table_number
+    """)
+    summary = cursor.fetchall()
+    connection.close()
+    return summary
+
+def get_total_orders():
+    """Return total number of orders and total quantity of items"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT item, SUM(quantity) as total_quantity
+        FROM orders
+        GROUP BY item
+        ORDER BY total_quantity DESC
+    """)
+    totals = cursor.fetchall()
+    connection.close()
+    return totals
