@@ -5,6 +5,7 @@ DB_NAME = "easy_order.db"
 # ----------------------------
 # Create tables
 # ----------------------------
+
 def create_tables():
     """Create tables and orders if they don't exist."""
     connection = sqlite3.connect(DB_NAME)
@@ -34,17 +35,21 @@ def create_tables():
     connection.commit()
     connection.close()
     print("Database and tables created successfully!")
-
 # ----------------------------
 # Tables management
 # ----------------------------
 def add_table(number, status="Free"):
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO tables (number, status) VALUES (?, ?)", (number, status))
-    connection.commit()
-    connection.close()
-    print(f"Table {number} added with status '{status}'.")
+    #Check if table already exists
+    cursor.execute("SELECT number FROM tables WHERE number=?", (number,))
+    if cursor.fetchone():
+        print(f"Table {number} already exists!")
+    else:
+        cursor.execute("INSERT INTO tables (number, status) VALUES (?, ?)", (number, status))
+        connection.commit()
+        connection.close()
+        print(f"Table {number} added with status '{status}'.")
 
 def get_tables():
     connection = sqlite3.connect(DB_NAME)
@@ -70,6 +75,19 @@ def clear_tables():
     connection.close()
     print("All tables cleared.")
 
+def clear_one_table(table_number):
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM tables WHERE number=?", (table_number,))
+    table = cursor.fetchone()
+    if table:
+        cursor.execute("DELETE FROM tables WHERE number=?", (table_number,))
+        connection.commit()
+        print(f"Table {table_number} was deleted!")
+    else:
+        print(f"Table {table_number} does not exist.")      
+    connection.close()
+
 # ----------------------------
 # Orders management
 # ----------------------------
@@ -82,7 +100,7 @@ def add_order(table_number, item, quantity, status="Pending"):
     )
     connection.commit()
     connection.close()
-    print(f"Order added: {quantity} x {item} for table {table_number}.")
+    print(f"Order added: {quantity} x {item} for Table {table_number}.")
 
 def get_orders(table_number=None):
     connection = sqlite3.connect(DB_NAME)
@@ -110,3 +128,87 @@ def clear_orders():
     connection.commit()
     connection.close()
     print("All orders cleared.")
+
+def clear_one_order(order_id):
+    """Delete a single order by its ID, with existence Check"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM orders WHERE id=?", (order_id,))
+    order = cursor.fetchone()
+    if order:
+        cursor.execute("DELETE FROM orders WHERE id=?", (order_id,))
+        connection.commit()
+        print(f"Order {order_id} was deleted!")
+    else:
+        print(f"Order {order_id} does not exist.")      
+    connection.close()
+
+# ----------------------------
+# Restaurant Menu
+# ----------------------------
+connection = sqlite3.connect(DB_NAME)
+cursor = connection.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS menu (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT,
+    price REAL NOT NULL
+)
+""")
+connection.commit()
+connection.close()
+print("Menu table created sucessfully!")
+
+def add_menu_item(name, category, price):
+    """Add new item to the menu"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO menu (name, category, price) VALUES (?, ?, ?)", (name, category, price))
+    connection.commit()
+    connection.close()
+    print(f"Menu item '{name}' added successfully!")
+
+def get_menu():
+    """Return all items in the menu"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("SELECT id, name, category, price FROM menu")
+    items = cursor.fetchall()
+    connection.close()
+    return items
+
+def delete_menu_item(name, category, price):
+    """Delete 1 item from the menu table"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM menu WHERE name=? AND category=? AND price=?", (name, category, price))
+    connection.commit()
+    connection.close()
+    print(f"Menu item '{name}' deleted from Menu!")
+
+def update_menu_item(item_id, new_name, new_category, new_price):
+    """"Update 1 item from the menu table by the ID"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute("UPDATE menu SET name=?, category=?, price=? WHERE id=?", (new_name, new_category, new_price))
+    connection.commit()
+    connection.close()
+    print(f"Menu item '{name}' updated in Menu!")
+
+def get_total_by_table(table_number):
+    """Calculate total price of all orders for a table"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+
+    #Join orders with menu to get price
+    cursor.execute("""
+        SELECT o.quantity, m.price FROM orders o
+        JOIN menu m ON o.item = m.name
+        WHERE o.table_number = ?""", (table_number,))
+    rows = cursor.fetchall()
+    connection.close()
+
+    total = sum(quantity * price for quantity, price in rows)
+    return total

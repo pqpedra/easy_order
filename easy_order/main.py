@@ -1,83 +1,155 @@
 from database import (
-    add_table, get_tables, update_table_status,
-    add_order, get_orders, update_order_status,
-    clear_tables, clear_orders, create_tables,
+    get_tables, add_table, update_table_status, clear_one_table,
+    get_orders, add_order, update_order_status, clear_one_order,
+    get_menu, add_menu_item, delete_menu_item, get_total_by_table
 )
+# ------------------- Tables Menu -------------------
+def tables_menu():
+    while True:
+        print("\n=== TABLES MENU ===")
+        print("1. Show Tables")
+        print("2. Add Table")
+        print("3. Update Table Status")
+        print("4. Delete Table")
+        print("5. Back to Main Menu\n")
 
-#initialize database and clean tables/orders for testing
-create_tables()
-clear_tables()
-clear_orders()
+        choice = input("Select an option: ").strip()
+        print()
 
-#Pre-fill some tables
-for num in range(1, 4):
-    add_table(num)
+        match choice:
+            case "1":
+                tables = get_tables()
+                for table in tables:
+                    print(f"Table {table[0]}: {table[1]}")
+                print()
+            case "2":
+                number = int(input("Enter table number to add: "))
+                add_table(number)
+                print()
+            case "3":
+                number = int(input("Enter table number to update: "))
+                status = input("New status (Free/Occupied): ")
+                update_table_status(number, status)
+                print()
+            case "4":
+                number = int(input("Enter table number to delete: "))
+                clear_one_table(number)
+                print()
+            case "5":
+                break
+            case _:
+                print("Invalid option, try again.\n")
 
-# ---------------------------------------
-# Helper Functions
-# ---------------------------------------
+# ------------------- Orders Menu -------------------
+def orders_menu():
+    while True:
+        print("\n=== ORDERS MENU ===")
+        print("1. Show Orders")
+        print("2. Add Order")
+        print("3. Update Order Status")
+        print("4. Delete Order")
+        print("5. Back to Main Menu\n")
 
-def show_tables():
-    tables = get_tables()
-    print("\nCurrent tables:")
-    for t in tables:
-        print(f"Table {t[0]} - Status: {t[1]}")
+        choice = input("Select an option: ").strip()
+        print()
 
-def show_orders(table_number=None):
-    orders = get_orders(table_number)
-    if not orders:
-        print("No orders found.")
-        return
-    print("\nOrders:")
-    for o in orders:
-        print(f"Order {o[0]} - Table {o[1]} - {o[2]} x{o[3]} - Status: {o[4]}")
+        match choice:
+            case "1":
+                table_input = input("Table number (leave empty for all): ")
+                if table_input.strip() == "":
+                    orders = get_orders()
+                else:
+                    orders = get_orders(int(table_input))
+                for order in orders:
+                    print(f"Order {order[0]} - Table {order[1]}: {order[2]} x {order[3]} ({order[4]})")
+                print()
+            case "2":
+                menu = get_menu()
+                print("\n--- Menu ---")
+                for item in menu:
+                    print(f"{item[0]}: {item[1]} ({item[2]}) - ${item[3]:.2f}")
+                print()
+                table = int(input("Enter table number: "))
+                item_id = int(input("Enter menu item ID to order: "))
+                quantity = int(input("Enter quantity: "))
+                item = next((i for i in menu if i[0] == item_id), None)
+                if item:
+                    add_order(table, item[1], quantity)
+                else:
+                    print("Item not found.")
+                print()
+            case "3":
+                order_id = int(input("Enter order ID to update: "))
+                status = input("New order status (Pending/Served): ")
+                update_order_status(order_id, status)
+                print()
+            case "4":
+                order_id = int(input("Enter order ID to delete: "))
+                clear_one_order(order_id)
+                print()
+            case "5":
+                break
+            case _:
+                print("Invalid option, try again.\n")
 
-# --------------------------------------
-# Main interactive menu
-# --------------------------------------
+# ------------------- Menu Items Menu -------------------
+def menu_items_menu():
+    while True:
+        print("\n=== MENU ITEMS MENU ===")
+        print("1. Show Menu")
+        print("2. Add Menu Item")
+        print("3. Delete Menu Item")
+        print("4. Back to Main Menu\n")
 
+        choice = input("Select an option: ").strip()
+        print()
+
+        match choice:
+            case "1":
+                menu = get_menu()
+                print("\n--- Menu ---")
+                for item in menu:
+                    print(f"{item[0]}: {item[1]} ({item[2]}) - ${item[3]:.2f}")
+                print()
+            case "2":
+                name = input("Menu item name: ")
+                category = input("Category: ")
+                price = float(input("Price: "))
+                add_menu_item(name, category, price)
+                print()
+            case "3":
+                item_id = int(input("Menu item ID to delete: "))
+                delete_menu_item(item_id)
+                print()
+            case "4":
+                break
+            case _:
+                print("Invalid option, try again.\n")
+
+# ------------------- Main Menu -------------------
 def main_menu():
     while True:
-        print("\n--- Easy Order Menu ---")
-        print("1. Show tables")
-        print("2. Add table")
-        print("3. Update table status")
-        print("4. Add order")
-        print("5. Update order status")
-        print("6. Show orders")
-        print("7. Exit")
-        
-        choice = input("Select an option: ")
+        print("\n=== EASY ORDER RESTAURANT ===")
+        print("1. Tables")
+        print("2. Orders")
+        print("3. Menu Items")
+        print("4. Exit\n")
 
-        if choice == "1":
-            show_tables()
-        elif choice == "2":
-            number = int(input("Table number to add: "))
-            add_table(number)
-        elif choice == "3":
-            number = int(input("Table number to update: "))
-            status = input("New status (Free/Occupied): ")
-            update_table_status(number, status)
-        elif choice == "4":
-            table = int(input("Table number: "))
-            item = input("Item name: ")
-            quantity = int(input("Quantity: "))
-            add_order(table, item, quantity)
-        elif choice == "5":
-            order_id = int(input("Order ID to update: "))
-            status = input("New order status (Pending/Served): ")
-            update_order_status(order_id, status)
-        elif choice == "6":
-            table_input = input("Table number (leave empty for all tables): ")
-            if table_input.strip() == "":
-                show_orders()
-            else:
-                show_orders(int(table_input))
-        elif choice == "7":
-            print("Exiting Easy Order. Goodbye!")
-            break
-        else:
-            print("Invalid option, try again.")
+        choice = input("Select an option: ").strip()
+        print()
+
+        match choice:
+            case "1":
+                tables_menu()
+            case "2":
+                orders_menu()
+            case "3":
+                menu_items_menu()
+            case "4":
+                print("Exiting Easy Order. Goodbye!")
+                break
+            case _:
+                print("Invalid option, try again.\n")
 
 if __name__ == "__main__":
     main_menu()
