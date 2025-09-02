@@ -2,6 +2,46 @@ import sqlite3
 
 DB_NAME = "easy_order.db"
 
+def ensure_schema():
+    """Create all required tables if they do not exist."""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+
+    # Tables table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS tables (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        number INTEGER NOT NULL UNIQUE,
+        status TEXT NOT NULL
+    )
+    """)
+
+    # Menu table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS menu (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        price REAL NOT NULL
+    )
+    """)
+
+    # Orders table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        table_number INTEGER NOT NULL,
+        item TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        FOREIGN KEY (table_number) REFERENCES tables(number)
+    )
+    """)
+
+    connection.commit()
+    connection.close()
+
+
 # ----------------------------
 # Create tables
 # ----------------------------
